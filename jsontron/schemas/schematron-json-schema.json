@@ -1,114 +1,551 @@
 {
-	"type": "Ojbect",
-	"properties":{
-				
-				"id":{
-					"description":"Need to Change Schema ID type to xsd:ID",
-					"type":"string",
-					"optional":true
-					
-					},
-					
-				"schemaVersion":{
-					"type":"string",
-					"minimumLength": 1,
-					"optional":true	
-					},
-					
-				"defaultPhase":{
-					"description":"Need to change the ID type to xsd:IDREF",
-					"type":"string",
-					"optional":true
-				},
-				
-				"queryBinding":{
-					"type":"string",
-					"minimumLength":1,
-					"optional":true
-				},
-				
-				"phase":{},
-				"pattern"
-			},
-			
-	"additionalProperties":{
-				"title":{"$ref":"#/definitions/title"},
-				"rich":{"$ref":"#/definitions/rich"},
-				"foreign":{"$ref":"#/definitions/foreign"},
-				"inclusion":{"$ref":"#/definitions/foreign"},
-				"ns":{"$ref":"#/definitions/ns"},
-				"p":{"$ref":"#/definitions/p"},
-				"let":{"$ref":"#/definitions/let"},
-				"diagnostics":{"$ref":"#/definitions/diagnostics"},
-				"sProperties":{"$ref":"#/definitions/sProperties"}
-			},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Schematron JSON rules document (ISO/IEC 19757-3:2025)",
+  "description": "JSON representation of the ISO/IEC 19757-3:2025 Annex A grammar. XML elements become keys (repeatable child elements become arrays), XML attributes keep their name. Unknown keys are allowed wherever the grammar allows foreign attributes and elements. Annex B constraints (id/IDREF resolution, param/let name clashes, matching param names of is-a patterns) cannot be expressed in JSON Schema and are not checked here.",
+  "type": "object",
+  "properties": {
+    "schema": { "$ref": "#/definitions/schema" },
+    "library": { "$ref": "#/definitions/library" },
+    "include": { "$ref": "#/definitions/includeItem" }
+  },
+  "oneOf": [
+    { "required": ["schema"] },
+    { "required": ["library"] },
+    { "required": ["include"] }
+  ],
+  "additionalProperties": false,
 
-	"definitions":{
-			"title":{
-				"description":"TODO: define this properly",
-				"type":"string",
-				"optional":true
-				
-		},
-			"rich":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			},
-			
-			"foreign":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			},
-			
-			"inclusion":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			},
-			
-			"ns":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			},
-			
-			"p":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			},
-			
-			"let":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			},
-			
-			"diagnostics":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			},
-			
-			"sProperties":{
-				"description": "TODO define this property",
-				"type":"string",
-				"optional":true
-			}
-		}			
+  "definitions": {
+
+    "schema": {
+      "description": "5.4.17 schema element. At least one pattern or group is required.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "icon": { "$ref": "#/definitions/uriValue" },
+        "see": { "$ref": "#/definitions/uriValue" },
+        "fpi": { "type": "string" },
+        "xml:lang": { "type": "string" },
+        "xml:space": { "enum": ["preserve", "default"] },
+        "schemaVersion": { "$ref": "#/definitions/nonEmptyString" },
+        "schematronEdition": {
+          "description": "5.5.15: the value, where specified, shall be 2025.",
+          "enum": ["2025", 2025]
+        },
+        "defaultPhase": {
+          "description": "IDREF of a phase.",
+          "$ref": "#/definitions/id"
+        },
+        "queryBinding": {
+          "description": "6.5: short name of the query language binding. Reserved names: stx, xslt, exslt, xslt2, xslt3, xslt4, xpath, xpath2, xpath3, xpath31, xpath4, xquery, xquery3, xquery31, xquery4. Case-insensitive. This implementation uses 'jsonpath'.",
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "include": { "$ref": "#/definitions/includeList" },
+        "extends": { "$ref": "#/definitions/extendsList" },
+        "title": { "$ref": "#/definitions/message" },
+        "ns": { "type": "array", "items": { "$ref": "#/definitions/ns" } },
+        "p": { "$ref": "#/definitions/pList" },
+        "param": {
+          "description": "5.4.11: schema level parameters. The value is required (Annex B, schema-param-value).",
+          "type": "array",
+          "items": {
+            "allOf": [
+              { "$ref": "#/definitions/param" },
+              { "required": ["value"] }
+            ]
+          }
+        },
+        "let": { "type": "array", "items": { "$ref": "#/definitions/let" } },
+        "phase": { "type": "array", "items": { "$ref": "#/definitions/phase" } },
+        "rules": { "$ref": "#/definitions/abstractRulesList" },
+        "pattern": { "type": "array", "items": { "$ref": "#/definitions/pattern" } },
+        "group": { "type": "array", "items": { "$ref": "#/definitions/pattern" } },
+        "diagnostics": { "$ref": "#/definitions/diagnostics" },
+        "properties": { "$ref": "#/definitions/properties" }
+      },
+      "anyOf": [
+        { "required": ["pattern"] },
+        { "required": ["group"] }
+      ]
+    },
+
+    "library": {
+      "description": "5.4.8 library element: external declarations (abstract rules, patterns, groups) to be pulled in with extends.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "icon": { "$ref": "#/definitions/uriValue" },
+        "see": { "$ref": "#/definitions/uriValue" },
+        "fpi": { "type": "string" },
+        "xml:lang": { "type": "string" },
+        "xml:space": { "enum": ["preserve", "default"] },
+        "include": { "$ref": "#/definitions/includeList" },
+        "extends": { "$ref": "#/definitions/extendsList" },
+        "title": { "$ref": "#/definitions/message" },
+        "p": { "$ref": "#/definitions/pList" },
+        "param": { "type": "array", "items": { "$ref": "#/definitions/param" } },
+        "let": { "type": "array", "items": { "$ref": "#/definitions/let" } },
+        "rules": { "$ref": "#/definitions/abstractRulesList" },
+        "pattern": { "type": "array", "items": { "$ref": "#/definitions/pattern" } },
+        "group": { "type": "array", "items": { "$ref": "#/definitions/pattern" } },
+        "diagnostics": { "$ref": "#/definitions/diagnostics" },
+        "properties": { "$ref": "#/definitions/properties" }
+      }
+    },
+
+    "phase": {
+      "description": "5.4.13 phase element. #ALL, #ANY and #DEFAULT are reserved and shall not be used as phase names.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "allOf": [
+            { "$ref": "#/definitions/id" },
+            { "not": { "enum": ["#ALL", "#ANY", "#DEFAULT"] } }
+          ]
+        },
+        "from": {
+          "description": "5.5.7: expression evaluated at the instance root; its result becomes the context for the rule contexts of the phase's patterns.",
+          "type": "string"
+        },
+        "when": {
+          "description": "5.5.22: Boolean expression evaluated at the instance root; the first phase in document order for which it is true becomes active (#ANY).",
+          "type": "string"
+        },
+        "icon": { "$ref": "#/definitions/uriValue" },
+        "see": { "$ref": "#/definitions/uriValue" },
+        "fpi": { "type": "string" },
+        "xml:lang": { "type": "string" },
+        "xml:space": { "enum": ["preserve", "default"] },
+        "include": { "$ref": "#/definitions/includeList" },
+        "p": { "$ref": "#/definitions/pList" },
+        "let": { "type": "array", "items": { "$ref": "#/definitions/let" } },
+        "active": {
+          "description": "5.4.2: patterns active in this phase. Either a pattern id, or an object with the required 'pattern' attribute.",
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/id" },
+              {
+                "type": "object",
+                "properties": {
+                  "pattern": { "$ref": "#/definitions/id" },
+                  "content": { "$ref": "#/definitions/message" }
+                },
+                "required": ["pattern"]
+              }
+            ]
+          }
+        }
+      },
+      "required": ["id"]
+    },
+
+    "pattern": {
+      "description": "5.4.12 pattern element and 5.4.5 group element (same structure; for a group the if-then-else behaviour of rules does not apply). Three forms: abstract (abstract=true, id required), concrete, or an instance of an abstract pattern (is-a, with param and no rule or let).",
+      "type": "object",
+      "properties": {
+        "documents": {
+          "description": "5.4.12: expression yielding IRIs of subordinate documents the rule contexts are relative to.",
+          "type": "string"
+        },
+        "role": { "type": "string" },
+        "icon": { "$ref": "#/definitions/uriValue" },
+        "see": { "$ref": "#/definitions/uriValue" },
+        "fpi": { "type": "string" },
+        "xml:lang": { "type": "string" },
+        "xml:space": { "enum": ["preserve", "default"] },
+        "abstract": { "type": "boolean" },
+        "id": { "$ref": "#/definitions/id" },
+        "is-a": {
+          "description": "IDREF of an abstract pattern.",
+          "$ref": "#/definitions/id"
+        },
+        "include": { "$ref": "#/definitions/includeList" },
+        "title": { "$ref": "#/definitions/message" },
+        "p": { "$ref": "#/definitions/pList" },
+        "param": { "type": "array", "items": { "$ref": "#/definitions/param" } },
+        "let": { "type": "array", "items": { "$ref": "#/definitions/let" } },
+        "rule": { "type": "array", "items": { "$ref": "#/definitions/rule" } }
+      },
+      "if": { "required": ["is-a"] },
+      "then": {
+        "properties": {
+          "abstract": { "const": false },
+          "rule": false,
+          "let": false
+        }
+      },
+      "else": {
+        "if": {
+          "required": ["abstract"],
+          "properties": { "abstract": { "const": true } }
+        },
+        "then": { "required": ["id"] },
+        "else": { "properties": { "param": false } }
+      }
+    },
+
+    "rule": {
+      "description": "5.4.15 rule element: either a concrete rule (context required) or an abstract rule (abstract=true, id required, no context).",
+      "type": "object",
+      "properties": {
+        "flag": { "$ref": "#/definitions/flagValue" },
+        "icon": { "$ref": "#/definitions/uriValue" },
+        "see": { "$ref": "#/definitions/uriValue" },
+        "fpi": { "type": "string" },
+        "xml:lang": { "type": "string" },
+        "xml:space": { "enum": ["preserve", "default"] },
+        "role": { "type": "string" },
+        "subject": { "type": "string" },
+        "abstract": { "type": "boolean" },
+        "id": { "$ref": "#/definitions/id" },
+        "context": { "type": "string" },
+        "visit-each": {
+          "description": "5.5.21: expression evaluated against each item of the rule context; its non-empty result becomes the context for the assertions.",
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "include": { "$ref": "#/definitions/includeList" },
+        "title": { "$ref": "#/definitions/message" },
+        "let": { "type": "array", "items": { "$ref": "#/definitions/let" } },
+        "assert": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/assert" } },
+        "report": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/report" } },
+        "extends": { "$ref": "#/definitions/extendsList" },
+        "p": { "$ref": "#/definitions/pList" }
+      },
+      "anyOf": [
+        { "required": ["assert"] },
+        { "required": ["report"] },
+        { "required": ["extends"] },
+        { "required": ["p"] }
+      ],
+      "if": {
+        "required": ["abstract"],
+        "properties": { "abstract": { "const": true } }
+      },
+      "then": {
+        "required": ["id"],
+        "properties": { "context": false, "visit-each": false }
+      },
+      "else": {
+        "required": ["context"]
+      }
+    },
+
+    "abstractRulesList": {
+      "description": "5.4.16 rules element: container for abstract rules, usable in a schema or library.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "icon": { "$ref": "#/definitions/uriValue" },
+          "see": { "$ref": "#/definitions/uriValue" },
+          "fpi": { "type": "string" },
+          "xml:lang": { "type": "string" },
+          "xml:space": { "enum": ["preserve", "default"] },
+          "title": { "$ref": "#/definitions/message" },
+          "p": { "$ref": "#/definitions/pList" },
+          "rule": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "allOf": [
+                { "$ref": "#/definitions/rule" },
+                { "required": ["abstract", "id"], "properties": { "abstract": { "const": true } } }
+              ]
+            }
+          }
+        },
+        "required": ["rule"]
+      }
+    },
+
+    "assert": {
+      "description": "5.4.3 assert element: passes if the test evaluates true.",
+      "allOf": [
+        { "$ref": "#/definitions/assertion" }
+      ]
+    },
+
+    "report": {
+      "description": "5.4.14 report element: reports if the test evaluates true (negated assert).",
+      "allOf": [
+        { "$ref": "#/definitions/assertion" }
+      ]
+    },
+
+    "assertion": {
+      "type": "object",
+      "properties": {
+        "test": { "type": "string" },
+        "flag": { "$ref": "#/definitions/flagValue" },
+        "id": { "$ref": "#/definitions/id" },
+        "diagnostics": {
+          "description": "IDREFS of diagnostic elements: space separated string, or array of ids.",
+          "$ref": "#/definitions/idrefs"
+        },
+        "properties": {
+          "description": "IDREFS of property elements: space separated string, or array of ids.",
+          "$ref": "#/definitions/idrefs"
+        },
+        "icon": { "$ref": "#/definitions/uriValue" },
+        "see": { "$ref": "#/definitions/uriValue" },
+        "fpi": { "type": "string" },
+        "xml:lang": { "type": "string" },
+        "xml:space": { "enum": ["preserve", "default"] },
+        "role": {
+          "description": "5.5.14. A variable reference is evaluated dynamically.",
+          "type": "string"
+        },
+        "subject": {
+          "description": "5.5.19: path evaluated in the context of the rule's context node.",
+          "type": "string"
+        },
+        "severity": {
+          "description": "5.5.16. Reserved values: fatal, error, warning, info. A variable reference is evaluated dynamically.",
+          "type": "string",
+          "examples": ["fatal", "error", "warning", "info"]
+        },
+        "message": { "$ref": "#/definitions/message" }
+      },
+      "required": ["test"]
+    },
+
+    "let": {
+      "description": "5.4.7 let element. The element-content form of let has no JSON equivalent; value is always an expression string.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "as": {
+          "description": "Datatype of the variable; support is up to the query language binding.",
+          "type": "string"
+        },
+        "value": { "type": "string" }
+      },
+      "required": ["name", "value"]
+    },
+
+    "param": {
+      "description": "5.4.11 param element.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "$ref": "#/definitions/nonEmptyString" }
+      },
+      "required": ["name"]
+    },
+
+    "ns": {
+      "description": "5.4.10 ns element.",
+      "type": "object",
+      "properties": {
+        "uri": { "$ref": "#/definitions/uriValue" },
+        "prefix": { "type": "string", "minLength": 1 }
+      },
+      "required": ["uri", "prefix"]
+    },
+
+    "includeItem": {
+      "description": "5.4.6 include element. href references another document of this format, optionally with a JSON Pointer fragment (e.g. 'other.json#/schema/pattern/0') selecting the element to insert.",
+      "type": "object",
+      "properties": {
+        "href": { "$ref": "#/definitions/uriValue" }
+      },
+      "required": ["href"]
+    },
+
+    "includeList": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/includeItem" }
+    },
+
+    "extendsList": {
+      "description": "5.4.4 extends element: either rule (IDREF of an abstract rule) or href (document of this format, optionally with a JSON Pointer fragment), but not both.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": { "rule": { "$ref": "#/definitions/id" } },
+            "required": ["rule"],
+            "not": { "required": ["href"] }
+          },
+          {
+            "type": "object",
+            "properties": { "href": { "$ref": "#/definitions/uriValue" } },
+            "required": ["href"],
+            "not": { "required": ["rule"] }
+          }
+        ]
+      }
+    },
+
+    "diagnostics": {
+      "description": "5.5.3 diagnostics element.",
+      "type": "object",
+      "properties": {
+        "include": { "$ref": "#/definitions/includeList" },
+        "diagnostic": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "role": { "type": "string" },
+              "icon": { "$ref": "#/definitions/uriValue" },
+              "see": { "$ref": "#/definitions/uriValue" },
+              "fpi": { "type": "string" },
+              "xml:lang": { "type": "string" },
+              "xml:space": { "enum": ["preserve", "default"] },
+              "message": { "$ref": "#/definitions/message" }
+            },
+            "required": ["id"]
+          }
+        }
+      }
+    },
+
+    "properties": {
+      "description": "5.5.12 properties element.",
+      "type": "object",
+      "properties": {
+        "property": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "role": { "type": "string" },
+              "scheme": { "type": "string" },
+              "message": { "$ref": "#/definitions/message" }
+            },
+            "required": ["id"]
+          }
+        }
+      }
+    },
+
+    "pList": {
+      "description": "5.5.10 p element: a paragraph as a plain string, or an object with optional id, class, icon and the text in 'content'.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "class": { "type": "string" },
+              "icon": { "$ref": "#/definitions/uriValue" },
+              "content": { "$ref": "#/definitions/message" }
+            }
+          }
+        ]
+      }
+    },
+
+    "message": {
+      "description": "Natural-language content of assert, report, diagnostic, property, title: a string, or an array of segments (string, name, value-of, emph, dir, span). A string message is evaluated as a JavaScript expression by the current engine.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/definitions/messageSegment" } }
+      ]
+    },
+
+    "messageSegment": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "description": "5.4.9 name element; path defaults to the context node.",
+          "type": "object",
+          "properties": {
+            "name": { "type": "object", "properties": { "path": { "type": "string" } } }
+          },
+          "required": ["name"],
+          "additionalProperties": false
+        },
+        {
+          "description": "5.4.18 value-of element.",
+          "type": "object",
+          "properties": {
+            "value-of": {
+              "type": "object",
+              "properties": { "select": { "type": "string" } },
+              "required": ["select"]
+            }
+          },
+          "required": ["value-of"],
+          "additionalProperties": false
+        },
+        {
+          "description": "5.5.5 emph element.",
+          "type": "object",
+          "properties": { "emph": { "$ref": "#/definitions/message" } },
+          "required": ["emph"],
+          "additionalProperties": false
+        },
+        {
+          "description": "5.5.4 dir element.",
+          "type": "object",
+          "properties": {
+            "dir": {
+              "type": "object",
+              "properties": {
+                "value": { "enum": ["ltr", "rtl"] },
+                "content": { "$ref": "#/definitions/message" }
+              }
+            }
+          },
+          "required": ["dir"],
+          "additionalProperties": false
+        },
+        {
+          "description": "5.5.18 span element.",
+          "type": "object",
+          "properties": {
+            "span": {
+              "type": "object",
+              "properties": {
+                "class": { "type": "string" },
+                "content": { "$ref": "#/definitions/message" }
+              },
+              "required": ["class"]
+            }
+          },
+          "required": ["span"],
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "id": {
+      "description": "xsd:ID / xsd:IDREF. The spec requires a well-formed name (7.2); the bundled example rules use ids with spaces, so only a non-empty string is enforced.",
+      "type": "string",
+      "minLength": 1
+    },
+
+    "idrefs": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/id" } }
+      ]
+    },
+
+    "flagValue": {
+      "description": "5.5.6: a list of one or more flag names. A variable reference is evaluated dynamically.",
+      "oneOf": [
+        { "type": "string", "pattern": "^\\s*\\S+(\\s+\\S+)*\\s*$" },
+        { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      ]
+    },
+
+    "uriValue": {
+      "type": "string"
+    },
+
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
 }
-
-
-{
-"description" :' {element schema {
-attribute id { xsd:ID }?,
-rich,
-attribute schemaVersion { non-empty-string }?,
-attribute defaultPhase { xsd:IDREF }?,
-attribute queryBinding { non-empty-string }?,
-(foreign
-& inclusion*
-& (title?, ns*, p*, let*, phase*, pattern+, p*, diagnostics?, properties))
-}'}
